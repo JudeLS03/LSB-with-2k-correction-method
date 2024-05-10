@@ -1,0 +1,70 @@
+import sys
+import math
+from os import path
+
+import cv2
+import numpy as np
+
+num_bits = 4 #change number of bits
+k = num_bits
+HIGHER_BITS = 256 - (1 << num_bits)
+LOWER_BITS = (1 << num_bits) - 1
+NUM_OF_PIXEL = math.ceil(8 / num_bits)
+identifier = '%'
+
+
+def insert(image_path, msg):
+    ext = path.splitext(image_path)
+    if ext[1] == ('.jpg' or '.jpeg'):
+        return False
+
+    img = cv2.imread(image_path, cv2.IMREAD_ANYCOLOR)
+    ori_shape = img.shape
+    max_bytes = ori_shape[0] * ori_shape[1] * 3 // NUM_OF_PIXEL
+    msg = '{}{}{}'.format(len(msg), identifier, msg)
+    assert max_bytes >= len(msg), "Message greater than capacity:{}".format(max_bytes)
+    data = np.reshape(img, -1)
+
+    for (idx, val) in enumerate(msg):
+        encode(data[idx * NUM_OF_PIXEL: (idx + 1) * NUM_OF_PIXEL], val)
+
+    img = np.reshape(data, ori_shape)
+    filename, _ = path.splitext(image_path)
+    filename += '_lsb_embeded' + ".bmp" #you can change save file Extension in here
+    cv2.imwrite(filename, img)
+    return filename
+
+
+def encode(block, data):
+    data = ord(data)
+    for idx in range(len(block)):
+        OPV = block[idx]
+        print('Actual pixel value is = ' + str(OPV))
+        block[idx] &= HIGHER_BITS
+        block[idx] = block[idx] | (data >> (num_bits * idx)) & LOWER_BITS
+        print('Stego pixel value is = ' + str(block[idx]))
+        x = float(block[idx])
+        ev = x - OPV
+        print('error value = ' + str(ev))
+
+        if (ev > 2 ** (k - 1)) and (block[idx] - 2 ** k >= 0):
+            block[idx] = block[idx] - 2 ** k
+        elif (ev < -2 ** (k - 1)) and (block[idx] + 2 ** k <= 255):
+            block[idx] = block[idx] + 2 ** k
+        else:
+            block[idx] = block[idx]
+        print("2k Corrected value = " + str(block[idx]))
+        print(" ")
+        print(" ")
+        print(" ")
+
+
+if __name__ == '__main__':
+
+    image_path = ("./") #Input you image path here
+    msg = "confidentiality datas."
+    res_path = insert(image_path, msg)
+    if not res_path:
+        print("file format is not supported")
+    else:
+        print("Successfully Embedded")
