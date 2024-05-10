@@ -1,0 +1,28 @@
+import glob
+import os
+
+from PIL import Image
+from os import path
+
+
+def create(path_list):
+    image_list = [Image.open(file) for file in path_list]
+    image_list[0].save('sample.gif', save_all=True, append_images=image_list[1:], duration=150, loop=0)
+
+
+def check_ext(img_list):
+    for i in range(len(img_list)):
+        ext = path.splitext(img_list[i])
+        if ext[1] == ('.jpg' or '.jpeg'):#you can chnage file extention here
+            return False
+
+    return True
+
+
+if __name__ == '__main__':
+    image_path_list = [] #enter image path list
+    if check_ext(image_path_list):
+        create(image_path_list)
+        print('Successfully GIF created')
+    else:
+        print('Inserted file formats are incorrect')
