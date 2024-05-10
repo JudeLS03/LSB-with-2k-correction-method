@@ -1,0 +1,15 @@
+from PIL import Image
+
+def extract_gif_frames(gif_path, output_folder):
+    with Image.open(gif_path) as img:
+        for frame in range(0, img.n_frames):
+            img.seek(frame)
+            frame_img = img.copy()
+            frame_img.save(f'{output_folder}/frame_{frame}.bmp') #you can change file Extension in here 
+
+
+if __name__ == '__main__':
+    gif_path = "./" #Input path of the GIF file
+    output_folder = "."
+    extract_gif_frames(gif_path, output_folder)
+    print("Successfully Separated")
